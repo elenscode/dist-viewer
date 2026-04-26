@@ -5,7 +5,7 @@ export const TOTAL_CHARTS = 200;
 export const LINE_COUNT = 2000;
 export const POINT_COUNT = 80;
 
-function hashSeed(input: string): number {
+export function hashSeed(input: string): number {
   let hash = 0;
   for (let i = 0; i < input.length; i += 1) {
     hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
@@ -13,33 +13,39 @@ function hashSeed(input: string): number {
   return hash;
 }
 
-export function buildThumbnailSvg(id: string): string {
+export type ThumbnailLine = Array<{ x: number; y: number }>;
+
+type ThumbnailLineOptions = {
+  maxLines?: number;
+  maxPoints?: number;
+};
+
+export function buildThumbnailLines(
+  id: string,
+  width: number,
+  height: number,
+  { maxLines = 20, maxPoints = POINT_COUNT }: ThumbnailLineOptions = {},
+): ThumbnailLine[] {
   const seed = hashSeed(id);
-  const width = 360;
-  const height = 180;
+  const top = height * 0.14;
+  const bottom = height * 0.83;
+  const available = bottom - top;
+  const lineCount = Math.max(1, Math.min(20, maxLines));
+  const pointCount = Math.max(2, Math.min(POINT_COUNT, maxPoints));
 
-  const paths = Array.from({ length: 20 }, (_, lineIndex) => {
-    const points = Array.from({ length: POINT_COUNT }, (_, pointIndex) => {
-      const x = (pointIndex / (POINT_COUNT - 1)) * width;
-      const base = 30 + lineIndex * 5.5;
-      const amp = 3 + ((seed + lineIndex) % 6);
-      const y = base + Math.sin(pointIndex * 0.24 + seed * 0.01 + lineIndex * 0.33) * amp;
-      return `${pointIndex === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-    }).join(' ');
+  return Array.from({ length: lineCount }, (_, lineIndex) => {
+    const originalLineIndex = lineCount === 1 ? 0 : Math.round((lineIndex / (lineCount - 1)) * 19);
 
-    return `<path d="${points}" fill="none" stroke="rgba(37,99,235,0.24)" stroke-width="1" />`;
-  }).join('');
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <rect width="100%" height="100%" fill="#ffffff" />
-      <path d="M18 150.5H342" stroke="#cbd5e1" stroke-width="1" />
-      <path d="M18 22V151" stroke="#e2e8f0" stroke-width="1" />
-      ${paths}
-    </svg>
-  `;
-
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    return Array.from({ length: pointCount }, (_, pointIndex) => {
+      const originalPointIndex =
+        pointCount === 1 ? 0 : Math.round((pointIndex / (pointCount - 1)) * (POINT_COUNT - 1));
+      const x = (pointIndex / (pointCount - 1)) * width;
+      const base = top + available * (originalLineIndex / 22);
+      const amp = 6 + ((seed + lineIndex) % 10);
+      const y = base + Math.sin(originalPointIndex * 0.24 + seed * 0.01 + originalLineIndex * 0.33) * amp;
+      return { x, y };
+    });
+  });
 }
 
 export function buildPlotlyFigure(id: string): { data: Data[]; layout: Partial<Layout> } {

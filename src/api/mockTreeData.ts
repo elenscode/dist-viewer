@@ -1,62 +1,57 @@
-export type TreeItem = {
-  id: string;
-  name: string;
-  type: 'file' | 'folder' | 'item';
-  children?: TreeItem[];
-};
+import type { ProjectFileItem } from '../types/chart';
 
-export const MOCK_TREE_DATA: TreeItem[] = [
+export const MOCK_TREE_DATA: ProjectFileItem[] = [
   {
-    id: 'f1',
-    name: 'Dashboard Configuration',
+    id: 'line-a',
+    name: 'Line A Compressor Logs',
     type: 'file',
     children: [
       {
-        id: 'g1',
-        name: 'Executive Summary',
+        id: 'line-a-vibration',
+        name: 'Vibration Runs',
         type: 'folder',
         children: [
-          { id: 'i1', name: 'Revenue Chart', type: 'item' },
-          { id: 'i2', name: 'User Growth', type: 'item' },
+          { id: 'line-a-vib-0423', name: 'Run 0423', type: 'item' },
+          { id: 'line-a-vib-0424', name: 'Run 0424', type: 'item' },
         ],
       },
-      { id: 'i3', name: 'Active Sessions', type: 'item' },
+      { id: 'line-a-temp-0424', name: 'Temperature Sweep 0424', type: 'item' },
     ],
   },
   {
-    id: 'f2',
-    name: 'Sales Reports',
+    id: 'line-b',
+    name: 'Line B Pump Logs',
     type: 'file',
     children: [
-      { id: 'i4', name: 'Q1 Performance', type: 'item' },
+      { id: 'line-b-pressure-0418', name: 'Pressure Run 0418', type: 'item' },
       {
-        id: 'g2',
-        name: 'Forecasts',
+        id: 'line-b-bearing',
+        name: 'Bearing Sensors',
         type: 'folder',
         children: [
-          { id: 'i5', name: 'Q2 Projections', type: 'item' },
-          { id: 'i6', name: 'Annual Review', type: 'item' },
+          { id: 'line-b-bearing-0419', name: 'Bearing Run 0419', type: 'item' },
+          { id: 'line-b-bearing-0420', name: 'Bearing Run 0420', type: 'item' },
         ],
       },
     ],
   },
   {
-    id: 'f3',
-    name: 'Marketing Campaigns',
+    id: 'cell-c',
+    name: 'Cell C Furnace Logs',
     type: 'file',
     children: [
-      { id: 'i7', name: 'Social Media Reach', type: 'item' },
-      { id: 'i8', name: 'Email Open Rates', type: 'item' },
-      { id: 'i9', name: 'Conversion Funnel', type: 'item' },
+      { id: 'cell-c-zone-1', name: 'Zone 1 Heat Profile', type: 'item' },
+      { id: 'cell-c-zone-2', name: 'Zone 2 Heat Profile', type: 'item' },
+      { id: 'cell-c-exhaust', name: 'Exhaust Flow Profile', type: 'item' },
     ],
   },
   {
-    id: 'f4',
-    name: 'System Logs',
+    id: 'qa-rig',
+    name: 'QA Rig Baseline Logs',
     type: 'file',
     children: [
-      { id: 'i10', name: 'Error Rates', type: 'item' },
-      { id: 'i11', name: 'Latency Metrics', type: 'item' },
+      { id: 'qa-rig-baseline', name: 'Baseline Capture', type: 'item' },
+      { id: 'qa-rig-stress', name: 'Stress Capture', type: 'item' },
     ],
   },
 ];

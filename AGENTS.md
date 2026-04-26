@@ -1,32 +1,72 @@
-# Repository Guidelines
+# Agent Map
 
-## Project Structure & Module Organization
+This repository is a React/TypeScript visualization PoC for exploring large equipment-log chart sets through thumbnail-first interaction and on-demand Plotly rendering.
 
-This is a React 18 + TypeScript + Vite proof of concept for rendering Plotly chart thumbnails and opening a single live Plotly chart in a modal. Application code lives in `src/`. Main entry points are `src/main.tsx` and `src/App.tsx`.
+## First Read
 
-Use `src/components/` for feature components such as `ChartGrid`, `ChartCard`, `ChartModal`, and `PlotlyChart`. Reusable shadcn-style primitives live in `src/components/ui/`. Mock data APIs belong in `src/api/`, shared helpers in `src/lib/`, hooks in `src/hooks/`, and shared types in `src/types/`. Static public assets, if added, should go in `public/`.
+1. `docs/index.md` for the documentation map.
+2. `docs/repo-audit.md` for current facts and assumptions.
+3. `ARCHITECTURE.md` for boundaries, import rules, and data flow.
+4. `docs/TESTING.md` for the required verification loop.
+5. `docs/CONTRIBUTING_AGENT.md` before planning multi-file work.
 
-## Build, Test, and Development Commands
+## Working Rules
 
-- `npm install`: install dependencies from `package.json`.
-- `npm run dev`: start the Vite development server.
-- `npm run build`: run TypeScript build checks, then create the production Vite build.
-- `npm run preview`: preview the production build locally.
+- Prefer small, reversible changes.
+- Keep product, architecture, test, and runbook docs aligned with code changes.
+- Treat generated docs in `docs/generated/` as agent-readable indexes; refresh them when structure or commands change.
+- Do not hardcode secrets, tokens, production URLs, credentials, or customer data.
+- Do not run destructive commands without explicit human approval.
+- For risky work, create an execution plan from `docs/exec-plans/PLAN_TEMPLATE.md`.
 
-A `pnpm-lock.yaml` is present, so `pnpm install`, `pnpm dev`, `pnpm build`, and `pnpm preview` are also acceptable if the team standardizes on pnpm.
+## Common Commands
 
-## Coding Style & Naming Conventions
+```bash
+pnpm install
+pnpm run build
+pnpm run architecture:check
+pnpm run docs:health
+pnpm run check
+scripts/agent/doctor.sh
+scripts/agent/run-all-checks.sh
+scripts/agent/self-review.sh
+scripts/agent/prepare-pr.sh
+```
 
-Write TypeScript and React function components. Keep component files in PascalCase, for example `ChartModal.tsx`; hooks should use `use-*` or `useSomething` naming. Prefer the `@/*` path alias for cross-folder imports when it improves clarity.
+## Required Loop
 
-Use strict TypeScript. Keep shared shapes in `src/types/`. Follow the existing style: two-space indentation, single quotes, semicolons, Tailwind utility classes, and shadcn UI conventions from `components.json`.
+Before changing code:
 
-## Testing Guidelines
+1. Read the relevant docs and code.
+2. Run `scripts/agent/doctor.sh` when environment state is unknown.
+3. Identify tests or checks that should fail if the work is wrong.
 
-No test runner is configured yet. For now, use `npm run build` as the required verification step before opening a PR. When adding tests, colocate them near the code under test using names like `ChartGrid.test.tsx`, and add the test command to `package.json`.
+After changing code:
 
-## Commit & Pull Request Guidelines
+1. Run the narrowest relevant check first.
+2. Run `scripts/agent/run-all-checks.sh` before PR handoff.
+3. Run `scripts/agent/self-review.sh` and fix material findings.
+4. Update docs if behavior, architecture, commands, risks, or workflows changed.
 
-This checkout does not include Git history, so no existing commit convention can be inferred. Use concise, imperative commit subjects such as `Add chart modal loading state`.
+## PR Rules
 
-Pull requests should include a short summary, verification steps, linked issues if applicable, and screenshots or screen recordings for UI changes involving the chart grid, sidebar, or modal.
+- Include summary, linked docs or exec plan, verification evidence, security/reliability impact, rollback notes, and human-review needs.
+- UI changes should include screenshot or trace evidence when tooling is available.
+- API/data-boundary changes must include request/response or schema examples.
+- Repeated review feedback must be promoted into docs, checks, tests, or scripts.
+
+## Escalate To A Human
+
+- Requirements conflict or product judgment cannot be verified by tests.
+- A change may delete data, alter deployments, expose secrets, or affect production users.
+- External credentials, paid services, or unavailable permissions are required.
+- Validation cannot be automated and residual risk is material.
+
+## More Detail
+
+- Product: `docs/PRODUCT.md`, `docs/PRODUCT_SENSE.md`
+- Frontend: `docs/FRONTEND.md`, `docs/DESIGN.md`
+- Security: `docs/SECURITY.md`
+- Reliability/observability: `docs/RELIABILITY.md`, `docs/OBSERVABILITY.md`
+- Review: `docs/REVIEW.md`, `docs/reviewers/`
+- Runbooks: `docs/runbooks/`

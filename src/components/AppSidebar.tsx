@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, File, Folder, Search } from 'lucide-react';
+import { ChevronRight, File, Folder, Images, Search } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -15,14 +15,16 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { MOCK_TREE_DATA, TreeItem } from '@/api/mockTreeData';
+import { MOCK_TREE_DATA } from '@/api/mockTreeData';
+import type { ProjectFileItem } from '@/types/chart';
 
 type TreeNodeProps = {
-  item: TreeItem;
+  item: ProjectFileItem;
   selectedIds: Set<string>;
-  onToggle: (item: TreeItem, checked: boolean) => void;
+  onToggle: (item: ProjectFileItem, checked: boolean) => void;
   depth?: number;
 };
 
@@ -125,37 +127,30 @@ function TreeNode({ item, selectedIds, onToggle, depth = 0 }: TreeNodeProps) {
   );
 }
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  selectedIds: Set<string>;
+  generatedCount: number;
+  isGenerating: boolean;
+  onToggleProjectItem: (item: ProjectFileItem, checked: boolean) => void;
+  onGenerate: () => void;
+};
+
+export function AppSidebar({
+  selectedIds,
+  generatedCount,
+  isGenerating,
+  onToggleProjectItem,
+  onGenerate,
+}: AppSidebarProps) {
   const [query, setQuery] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const toggleId = (item: TreeItem, checked: boolean) => {
-    const newSelected = new Set(selectedIds);
-    const idsToProcess: string[] = [];
-
-    const getDescendants = (node: TreeItem) => {
-      idsToProcess.push(node.id);
-      if (node.children) {
-        node.children.forEach((child) => getDescendants(child));
-      }
-    };
-    getDescendants(item);
-
-    if (checked) {
-      idsToProcess.forEach((id) => newSelected.add(id));
-    } else {
-      idsToProcess.forEach((id) => newSelected.delete(id));
-    }
-    setSelectedIds(newSelected);
-  };
 
   const filteredData = useMemo(() => {
     if (!query.trim()) return MOCK_TREE_DATA;
 
     const lowerQuery = query.toLowerCase();
 
-    const filterItems = (items: TreeItem[]): TreeItem[] => {
-      return items.reduce<TreeItem[]>((acc, item) => {
+    const filterItems = (items: ProjectFileItem[]): ProjectFileItem[] => {
+      return items.reduce<ProjectFileItem[]>((acc, item) => {
         const itemMatches = item.name.toLowerCase().includes(lowerQuery);
         const filteredChildren = item.children ? filterItems(item.children) : [];
 
@@ -212,7 +207,7 @@ export function AppSidebar() {
                   key={file.id}
                   item={file}
                   selectedIds={selectedIds}
-                  onToggle={toggleId}
+                  onToggle={onToggleProjectItem}
                 />
               ))}
 
@@ -225,6 +220,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <div className="border-t border-sidebar-border p-3">
+        <Button className="w-full" size="lg" onClick={onGenerate} disabled={selectedIds.size === 0 || isGenerating}>
+          <Images />
+          {isGenerating ? 'Generating' : 'Generate thumbnails'}
+        </Button>
+        <div className="mt-2 text-xs text-slate-500">
+          {selectedIds.size} selected · {generatedCount} thumbnails
+        </div>
+      </div>
     </Sidebar>
   );
 }

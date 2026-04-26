@@ -1,30 +1,62 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { fetchChartThumbnails } from './api/mockCharts';
+import { ChartFeaturePanel } from './components/ChartFeaturePanel';
 import { ChartGrid } from './components/ChartGrid';
 import { ChartModal } from './components/ChartModal';
 import { AppSidebar } from './components/AppSidebar';
 import { SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
-import type { ChartThumbnail } from './types/chart';
+import type { ChartThumbnail, ProjectFileItem } from './types/chart';
 
 export default function App() {
   const [items, setItems] = useState<ChartThumbnail[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<ChartThumbnail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [projectSelection, setProjectSelection] = useState<Set<string>>(new Set());
+  const [chartSelection, setChartSelection] = useState<Set<string>>(new Set());
+  const [modalItem, setModalItem] = useState<ChartThumbnail | null>(null);
   const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    let alive = true;
+  const handleGenerate = async () => {
+    setLoading(true);
 
-    fetchChartThumbnails().then((next) => {
-      if (!alive) return;
+    try {
+      const next = await fetchChartThumbnails(Array.from(projectSelection));
       setItems(next);
+      setChartSelection(new Set());
+    } finally {
       setLoading(false);
-    });
+    }
+  };
 
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const toggleProjectItem = (item: ProjectFileItem, checked: boolean) => {
+    setProjectSelection((current) => {
+      const next = new Set(current);
+      const idsToProcess: string[] = [];
+
+      const collectIds = (node: ProjectFileItem) => {
+        idsToProcess.push(node.id);
+        node.children?.forEach((child) => collectIds(child));
+      };
+
+      collectIds(item);
+
+      if (checked) {
+        idsToProcess.forEach((id) => next.add(id));
+      } else {
+        idsToProcess.forEach((id) => next.delete(id));
+      }
+
+      return next;
+    });
+  };
+
+  const toggleChart = (item: ChartThumbnail, checked: boolean) => {
+    setChartSelection((current) => {
+      const next = new Set(current);
+      if (checked) next.add(item.id);
+      else next.delete(item.id);
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     if (!query.trim()) return items;
@@ -32,18 +64,30 @@ export default function App() {
     return items.filter((item) => item.title.toLowerCase().includes(normalized));
   }, [items, query]);
 
+  const selectedCharts = useMemo(
+    () => items.filter((item) => chartSelection.has(item.id)),
+    [items, chartSelection],
+  );
+
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <main className="min-h-full bg-slate-50 flex-1 w-full overflow-auto">
-        <div className="mx-auto max-w-[1800px] p-4 md:p-6">
+      <AppSidebar
+        selectedIds={projectSelection}
+        generatedCount={items.length}
+        isGenerating={loading}
+        onToggleProjectItem={toggleProjectItem}
+        onGenerate={handleGenerate}
+      />
+      <main className="flex min-h-full w-full flex-1 bg-slate-50">
+        <div className="min-w-0 flex-1 overflow-auto p-4 md:p-6">
+          <div className="mx-auto max-w-[1800px]">
           <header className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="flex items-start gap-3">
               <SidebarTrigger className="-ml-2 mt-1" />
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Chart Thumbnail Explorer</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Equipment Log Explorer</h1>
                 <p className="text-sm text-slate-500">
-                  Preview first, then open one Plotly WebGL chart in a modal when needed.
+                  Select mock project files, generate chart thumbnails, then compare selected chart features.
                 </p>
               </div>
             </div>
@@ -56,13 +100,19 @@ export default function App() {
           />
         </header>
 
-        <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
-          <div className="font-medium text-slate-900">PoC structure</div>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Grid and chart are split into React components.</li>
-            <li>Thumbnails come from a mock async API that returns image URLs.</li>
-            <li>Only the selected card mounts a live Plotly <code>scattergl</code> chart.</li>
-          </ul>
+        <section className="mb-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase text-slate-500">Project files</div>
+            <div className="mt-1 text-2xl font-semibold text-slate-900">{projectSelection.size}</div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase text-slate-500">Generated thumbnails</div>
+            <div className="mt-1 text-2xl font-semibold text-slate-900">{items.length}</div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-xs font-medium uppercase text-slate-500">Selected charts</div>
+            <div className="mt-1 text-2xl font-semibold text-slate-900">{selectedCharts.length}</div>
+          </div>
         </section>
 
         {loading ? (
@@ -72,11 +122,18 @@ export default function App() {
             ))}
           </div>
         ) : (
-          <ChartGrid items={filtered} onOpen={setSelected} />
+          <ChartGrid
+            items={filtered}
+            selectedIds={chartSelection}
+            onToggle={toggleChart}
+            onOpen={setModalItem}
+          />
         )}
       </div>
+        </div>
 
-      <ChartModal item={selected} onClose={() => setSelected(null)} />
+      <ChartFeaturePanel items={selectedCharts} onClear={() => setChartSelection(new Set())} />
+      <ChartModal item={modalItem} onClose={() => setModalItem(null)} />
       </main>
     </SidebarProvider>
   );

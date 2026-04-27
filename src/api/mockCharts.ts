@@ -1,12 +1,11 @@
 import { LINE_COUNT, POINT_COUNT, TOTAL_CHARTS } from '../lib/chartData';
-import { buildOpenCvThumbnailPng } from '../lib/opencvThumbnail';
 import { MOCK_TREE_DATA } from './mockTreeData';
+import { fetchMockThumbnailImage } from './mockThumbnailBackend';
 import type { ChartThumbnail, ProjectFileItem } from '../types/chart';
 
 const MOCK_DELAY_MS = 250;
 const CHARTS_PER_SELECTED_ITEM = 8;
 const MAX_GENERATED_CHARTS = 72;
-const THUMBNAIL_BATCH_SIZE = 6;
 const EQUIPMENT = ['CMP-104', 'PMP-210', 'FNC-312', 'QA-077', 'DRV-506'];
 const SIGNAL_TYPES = ['Vibration', 'Temperature', 'Pressure', 'Current', 'Flow'];
 const SEVERITIES: ChartThumbnail['severity'][] = ['Normal', 'Watch', 'Warning', 'Critical'];
@@ -45,10 +44,6 @@ function collectLeaves(items: ProjectFileItem[], selectedIds: Set<string>, path:
   });
 }
 
-async function yieldToBrowser() {
-  await new Promise((resolve) => window.requestAnimationFrame(resolve));
-}
-
 export async function fetchChartThumbnails(selectedProjectIds: string[]): Promise<ChartThumbnail[]> {
   await new Promise((resolve) => window.setTimeout(resolve, MOCK_DELAY_MS));
 
@@ -83,20 +78,16 @@ export async function fetchChartThumbnails(selectedProjectIds: string[]): Promis
     };
   });
 
-  const rendered: ChartThumbnail[] = [];
-
-  for (let index = 0; index < chartMetadata.length; index += THUMBNAIL_BATCH_SIZE) {
-    const batch = chartMetadata.slice(index, index + THUMBNAIL_BATCH_SIZE);
-    const renderedBatch = await Promise.all(
-      batch.map(async (item) => ({
-        ...item,
-        thumbnailUrl: await buildOpenCvThumbnailPng(item.id),
-      })),
-    );
-
-    rendered.push(...renderedBatch);
-    await yieldToBrowser();
-  }
+  const rendered = await Promise.all(
+    chartMetadata.map(async (item) => ({
+      ...item,
+      thumbnailUrl: await fetchMockThumbnailImage({
+        chartId: item.id,
+        title: item.title,
+        seed: hashSeed(item.id),
+      }),
+    })),
+  );
 
   return rendered;
 }

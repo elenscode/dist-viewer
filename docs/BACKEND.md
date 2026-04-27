@@ -17,3 +17,24 @@ No backend exists in the current repository snapshot.
 - Chart series metadata.
 - Chart data windowing and downsampling.
 - Error response shape.
+
+## Current Frontend Mock Thumbnail Contract
+
+The UI currently calls a mock boundary (`src/api/mockThumbnailBackend.ts`) that represents a future backend image endpoint.
+
+Example request (future target shape):
+
+```http
+GET /api/chart-thumbnails/{chartId}
+```
+
+Example response shape (current mock equivalent):
+
+```json
+{
+  "chartId": "line-3-chart-10",
+  "imageUrl": "data:image/svg+xml;charset=utf-8,..."
+}
+```
+
+When replacing the mock boundary with a real backend call, keep normalization in `src/api/` before UI components consume image URLs.

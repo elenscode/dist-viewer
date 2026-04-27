@@ -7,7 +7,7 @@
 - Vite.
 - Tailwind CSS 4.
 - Plotly through `react-plotly.js`.
-- OpenCV.js through `@techstark/opencv-js` for mock thumbnail image generation.
+- Mock backend image API boundary for thumbnail image retrieval.
 
 ## Source Rules
 
@@ -20,10 +20,9 @@
 ## Performance Rules
 
 - Do not mount Plotly in thumbnail cards.
-- Use deterministic thumbnail generation for overview screens; current mock thumbnails are downsampled OpenCV-rendered PNG data URLs.
+- Use backend-provided thumbnail images for overview screens through `src/api/` boundary functions.
 - Keep thumbnail selection and feature-table rendering lightweight; Plotly should stay modal-only.
-- Keep OpenCV loading and `Mat` work outside React render paths.
-- Render OpenCV thumbnails at reduced resolution with capped line/point counts, then batch generation so the browser can paint between batches.
+- Keep thumbnail image fetch/normalization in `src/api/` and outside React render paths.
 - Be careful with synchronous loops in render paths.
 - For real large logs, add pagination, virtualization, or workers before increasing data volume.
 

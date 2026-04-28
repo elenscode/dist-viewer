@@ -36,3 +36,9 @@
 
 - App sidebar supports tree search and coordinate-based filtering for mock `(x, y)` positions.
 - Coordinate filter defaults to "전체 선택" (all selected) so large coordinate sets remain fully visible on first load.
+
+## Current Feature Panel Behavior
+
+- The right panel appears when one or more charts are selected.
+- `Signal Features` tab keeps the existing tabular stats view (mean, peak, drift, anomaly).
+- `ML / DL Metrics` tab shows mock inference-oriented metrics per selected chart (anomaly band, cluster label/distance, AutoEncoder loss, LSTM forecast error, confidence).

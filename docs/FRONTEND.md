@@ -31,3 +31,8 @@
 - Minimum: `pnpm run build`.
 - Preferred once installed: Playwright route smoke with console and network error capture.
 - Artifact target: `.agent-artifacts/ui-checks/latest/`.
+
+## Current Sidebar Behavior
+
+- App sidebar supports tree search and coordinate-based filtering for mock `(x, y)` positions.
+- Coordinate filter defaults to "전체 선택" (all selected) so large coordinate sets remain fully visible on first load.

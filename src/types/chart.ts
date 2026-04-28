@@ -21,5 +21,9 @@ export type ProjectFileItem = {
   id: string;
   name: string;
   type: 'file' | 'folder' | 'item';
+  coordinate?: {
+    x: number;
+    y: number;
+  };
   children?: ProjectFileItem[];
 };

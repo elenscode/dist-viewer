@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { ChevronRight, File, Folder, Images, Search } from 'lucide-react';
 import {
   Sidebar,
@@ -26,9 +26,10 @@ type TreeNodeProps = {
   selectedIds: Set<string>;
   onToggle: (item: ProjectFileItem, checked: boolean) => void;
   depth?: number;
+  autoExpand?: boolean;
 };
 
-function TreeNode({ item, selectedIds, onToggle, depth = 0 }: TreeNodeProps) {
+function TreeNodeComponent({ item, selectedIds, onToggle, depth = 0, autoExpand = false }: TreeNodeProps) {
   const hasChildren = Boolean(item.children?.length);
   const isRoot = depth === 0;
   const BranchIcon = hasChildren ? Folder : File;
@@ -97,6 +98,7 @@ function TreeNode({ item, selectedIds, onToggle, depth = 0 }: TreeNodeProps) {
                 selectedIds={selectedIds}
                 onToggle={onToggle}
                 depth={depth + 1}
+                autoExpand={autoExpand}
               />
             ))}
           </SidebarMenuSub>
@@ -109,7 +111,8 @@ function TreeNode({ item, selectedIds, onToggle, depth = 0 }: TreeNodeProps) {
     return (
       <Collapsible
         key={item.id}
-        defaultOpen
+        defaultOpen={autoExpand}
+        open={autoExpand ? true : undefined}
         className="group/collapsible"
         render={
           <li className={isRoot ? 'group/menu-item relative' : 'group/menu-sub-item relative'} />
@@ -127,6 +130,16 @@ function TreeNode({ item, selectedIds, onToggle, depth = 0 }: TreeNodeProps) {
   );
 }
 
+const TreeNode = memo(
+  TreeNodeComponent,
+  (prevProps, nextProps) =>
+    prevProps.item === nextProps.item &&
+    prevProps.depth === nextProps.depth &&
+    prevProps.autoExpand === nextProps.autoExpand &&
+    prevProps.onToggle === nextProps.onToggle &&
+    prevProps.selectedIds.has(prevProps.item.id) === nextProps.selectedIds.has(nextProps.item.id),
+);
+
 type AppSidebarProps = {
   selectedIds: Set<string>;
   generatedCount: number;
@@ -143,11 +156,17 @@ export function AppSidebar({
   onGenerate,
 }: AppSidebarProps) {
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
+  const hasActiveQuery = deferredQuery.trim().length > 0;
+  const handleToggle = useCallback(
+    (item: ProjectFileItem, checked: boolean) => onToggleProjectItem(item, checked),
+    [onToggleProjectItem],
+  );
 
   const filteredData = useMemo(() => {
-    if (!query.trim()) return MOCK_TREE_DATA;
+    if (!hasActiveQuery) return MOCK_TREE_DATA;
 
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = deferredQuery.toLowerCase();
 
     const filterItems = (items: ProjectFileItem[]): ProjectFileItem[] => {
       return items.reduce<ProjectFileItem[]>((acc, item) => {
@@ -164,7 +183,7 @@ export function AppSidebar({
     };
 
     return filterItems(MOCK_TREE_DATA);
-  }, [query]);
+  }, [deferredQuery, hasActiveQuery]);
 
   return (
     <Sidebar>
@@ -207,7 +226,8 @@ export function AppSidebar({
                   key={file.id}
                   item={file}
                   selectedIds={selectedIds}
-                  onToggle={onToggleProjectItem}
+                  onToggle={handleToggle}
+                  autoExpand={hasActiveQuery}
                 />
               ))}
 
